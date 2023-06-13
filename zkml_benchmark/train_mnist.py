@@ -89,7 +89,7 @@ if __name__ == "__main__":
     train_dataset, test_dataset = load_dataset()
     model = LeNet()
     
-    train(model, train_dataset, num_epochs=1)
+    train(model, train_dataset)
     evaluate(model, test_dataset)
 
     with open("models/lenet.pickle", "wb") as f:
