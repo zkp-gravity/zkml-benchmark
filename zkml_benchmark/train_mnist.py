@@ -85,11 +85,14 @@ if __name__ == "__main__":
     train_dataset, test_dataset = load_dataset()
 
     model = LeNet()
-    
+
     train(model, train_dataset)
     evaluate(model, test_dataset)
 
     with open("models/lenet.pickle", "wb") as f:
         pickle.dump(model, f)
 
-    export(model, input_shape=[1, 28, 28], onnx_filename="models/lenet.onnx", input_filename="models/input.json")
+    # Use first text example
+    input_array = next(iter(test_dataset))[0][0].detach().numpy()
+
+    export(model, input_array=input_array, input_shape=[1, 28, 28], onnx_filename="models/lenet.onnx", input_filename="models/input.json")
