@@ -53,8 +53,6 @@ def train(model, train_dataset, learning_rate=0.001, num_epochs=10):
     total_step = len(train_dataset)
     for epoch in range(num_epochs):
         for i, (images, labels) in enumerate(train_dataset):
-            images = images
-            labels = labels
 
             # Forward pass
             outputs = model(images)
@@ -87,6 +85,7 @@ def evaluate(model, test_dataset):
 if __name__ == "__main__":
 
     train_dataset, test_dataset = load_dataset()
+
     model = LeNet()
     
     train(model, train_dataset)
