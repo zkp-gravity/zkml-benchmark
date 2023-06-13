@@ -1,3 +1,5 @@
+import pickle
+
 import torch
 import torchvision
 import torchvision.transforms as transforms
@@ -70,8 +72,6 @@ def evaluate(model, test_dataset):
         total = 0
         correct = 0
         for images, labels in test_dataset:
-            images = images
-            labels = labels
             outputs = model(images)
             _, predicted = torch.max(outputs.data, 1)
             total += labels.size(0)
@@ -88,5 +88,8 @@ if __name__ == "__main__":
     
     train(model, train_dataset)
     evaluate(model, test_dataset)
+
+    with open("models/lenet.pickle", "wb") as f:
+        pickle.dump(model, f)
 
     export(model, input_shape=[1, 28, 28], onnx_filename="models/lenet.onnx", input_filename="models/input.json")
