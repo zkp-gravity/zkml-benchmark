@@ -1,11 +1,9 @@
-# From: https://towardsdatascience.com/implementing-yann-lecuns-lenet-5-in-pytorch-5e05a0911320
-
-import pickle
-
 import torch
 import torchvision
 import torchvision.transforms as transforms
 from torch import nn, optim
+
+from ezkl import export
 
 
 class LeNet(nn.Module):
@@ -19,10 +17,10 @@ class LeNet(nn.Module):
 
     def forward(self, x):
         x = torch.relu(self.conv1(x))
-        x = torch.max_pool2d(x, 2)
+        x = torch.nn.functional.avg_pool2d(x, 2)
         x = torch.relu(self.conv2(x))
-        x = torch.max_pool2d(x, 2)
-        x = x.view(x.size(0), -1)
+        x = torch.nn.functional.avg_pool2d(x, 2)
+        x = x.flatten(1)
         x = torch.relu(self.fc1(x))
         x = torch.relu(self.fc2(x))
         x = self.fc3(x)
@@ -91,5 +89,4 @@ if __name__ == "__main__":
     train(model, train_dataset)
     evaluate(model, test_dataset)
 
-    with open("models/lenet.pickle", "wb") as f:
-        pickle.dump(model, f)
+    export(model, input_shape=[1, 28, 28], onnx_filename="models/lenet.onnx", input_filename="models/input.json")
