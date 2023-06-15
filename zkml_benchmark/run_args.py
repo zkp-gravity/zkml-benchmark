@@ -1,7 +1,7 @@
 import ezkl
 
 # Output of:
-# ezkl calibrate-settings -M models/lenet.onnx -D models/input.json --target resources
+# ezkl calibrate-settings -M models/lenet.onnx -D models/input.json --target resources --settings-path settings.json
 # But fails with:
 # error: constraint not satisfied
 
@@ -23,5 +23,5 @@ run_args = ezkl.PyRunArgs()
 
 # Works on first test example
 run_args.scale = 7
-run_args.bits = 23
-run_args.logrows = 24
+run_args.bits = 21
+run_args.logrows = 22
