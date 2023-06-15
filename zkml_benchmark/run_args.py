@@ -1,14 +1,27 @@
 import ezkl
 
-# In theory, we can do:
-# ezkl gen-circuit-params -M models/lenet.onnx --calibration-data models/input.json --calibration-target resources --circuit-params-path circuit.json
-# (using ezkl 0.2.0) 
-# This gives: "scale":5, "bits":19, "logrows":20
-# However, when using this, measure_accuracy.py prints:
-# At the selected lookup bits and fixed point scale, the largest input to a lookup table is too large to be represented (max: 270886, bits: 19, scale: 5).
-# Increase the lookup bits to [20]. The current scale cannot be decreased enough to fit the largest lookup input.
-# So, I decreased the scale to 4.
+# Output of:
+# ezkl calibrate-settings -M models/lenet.onnx -D models/input.json --target resources
+# But fails with:
+# error: constraint not satisfied
+
+#   Cell layout in region 'model':
+#     | Offset | A1 | A2 |
+#     +--------+----+----+
+#     | 295518 | x0 | x1 | <--{ Gate 'RANGE' applied here
+
+#   Constraint '':
+#     ((S6 * (0x2 - S6)) * (0x3 - S6)) * (x0 - x1) = 0
+
+#   Assigned cell values:
+#     x0 = 0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593effe0744
+#     x1 = 0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593effdffe6
 run_args = ezkl.PyRunArgs()
-run_args.scale = 4
-run_args.bits = 19
-run_args.logrows = 20
+# run_args.scale = 5
+# run_args.bits = 19
+# run_args.logrows = 20
+
+# Works on first test example
+run_args.scale = 7
+run_args.bits = 23
+run_args.logrows = 24
