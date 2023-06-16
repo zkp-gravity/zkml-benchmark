@@ -25,6 +25,8 @@ class LeNet(nn.Module):
             self.fc3 = None
 
     def forward(self, x):
+        # Note that tanh activation does a better job at keeping activations in a predictable
+        # range. This means that fewer bits are needed for quantization!
         x = torch.tanh(self.conv1(x))
         x = torch.nn.functional.avg_pool2d(x, 2)
         x = torch.tanh(self.conv2(x))
@@ -100,7 +102,7 @@ if __name__ == "__main__":
 
     train_dataset, test_dataset = load_dataset()
 
-    model = LeNet((4, 8, 8, None))
+    model = LeNet((2, 4, 8, None))
 
     train(model, train_dataset)
     evaluate(model, test_dataset)

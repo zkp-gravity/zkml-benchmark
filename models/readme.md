@@ -1,1 +1,0 @@
-The current model has a test accuracy of 98.17%.
