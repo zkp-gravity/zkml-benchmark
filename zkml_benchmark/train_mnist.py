@@ -1,3 +1,4 @@
+import argparse
 import pickle
 
 import torch
@@ -11,6 +12,10 @@ from ezkl import export
 class LeNet(nn.Module):
     def __init__(self, features=(6, 16, 120, 84)):
         super(LeNet, self).__init__()
+
+        features = list(features)
+        if len(features) == 3:
+            features.append(None)
 
         f1, f2, f3, f4 = features
 
@@ -100,18 +105,30 @@ def evaluate(model, test_dataset):
 
 if __name__ == "__main__":
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--features', nargs='+',
+                        help='Number of feature maps per layer (either 3 or 4)', required=True)
+    args = parser.parse_args()
+
+    features = args.features
+    assert len(features) in [
+        3, 4], "Number of feature maps per layer must be either 3 or 4"
+    features = [int(f) for f in features]
+
+    features_str = "_".join([str(f) for f in features])
+
     train_dataset, test_dataset = load_dataset()
 
-    model = LeNet((2, 4, 8, None))
+    model = LeNet(features)
 
     train(model, train_dataset)
     evaluate(model, test_dataset)
 
-    with open("models/lenet.pickle", "wb") as f:
+    with open(f"models/lenet_{features_str}.pickle", "wb") as f:
         pickle.dump(model, f)
 
     # Use first text example
     input_array = next(iter(test_dataset))[0][0].detach().numpy()
 
     export(model, input_array=input_array, input_shape=[
-           1, 28, 28], onnx_filename="models/lenet.onnx", input_filename="models/input.json")
+           1, 28, 28], onnx_filename=f"models/lenet_{features_str}.onnx", input_filename="models/input.json")

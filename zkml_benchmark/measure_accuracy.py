@@ -1,19 +1,18 @@
+import argparse
 import json
 import os
 import pickle
 import tempfile
 
+import ezkl
 import torch
 import torchvision
 import torchvision.transforms as transforms
-from run_args import run_args
 # Needed to load pickle file
 from train_mnist import LeNet
 
-import ezkl
 
-
-def predict(x, model, tmpdir):
+def predict(x, model, tmpdir, run_args, model_path):
 
     input_filename = os.path.join(tmpdir, "input.json")
     output_filename = os.path.join(tmpdir, "output.json")
@@ -29,7 +28,7 @@ def predict(x, model, tmpdir):
     with open(input_filename, "w") as f:
         json.dump(data, f)
 
-    ezkl.forward(input_filename, "models/lenet.onnx",
+    ezkl.forward(input_filename, model_path,
                  output_filename, run_args)
 
     with open(output_filename, "r") as f:
@@ -39,7 +38,7 @@ def predict(x, model, tmpdir):
     return predicted, predicted_quantized
 
 
-def compute_accuracy(model, tmpdir):
+def compute_accuracy(model, tmpdir, run_args, model_path):
 
     transform = transforms.Compose([
         transforms.ToTensor(),
@@ -56,7 +55,8 @@ def compute_accuracy(model, tmpdir):
     correct_quantized = 0
 
     for i, (images, labels) in enumerate(test_loader):
-        predicted, predicted_quantized = predict(images, model, tmpdir)
+        predicted, predicted_quantized = predict(
+            images, model, tmpdir, run_args, model_path)
 
         total += labels.size(0)
         correct += (predicted == labels).sum().item()
@@ -75,10 +75,28 @@ def compute_accuracy(model, tmpdir):
 
 if __name__ == "__main__":
 
-    with open("models/lenet.pickle", "rb") as f:
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--model', help='Path to the ONNX file', required=True)
+    parser.add_argument('--scale', help='EZKL Scale argument', required=True)
+    parser.add_argument('--bits', help='EZKL Bits argument', required=True)
+    parser.add_argument(
+        '--logrows', help='EZKL LogRows argument', required=True)
+    args = parser.parse_args()
+
+    model_path = args.model
+
+    run_args = ezkl.PyRunArgs()
+    run_args.scale = int(args.scale)
+    run_args.bits = int(args.bits)
+    run_args.logrows = int(args.logrows)
+
+    # Assume the pickle file is next to the ONNX file
+    pickle_path = model_path[:-len(".onnx")] + ".pickle"
+
+    with open(pickle_path, "rb") as f:
         model = pickle.load(f)
 
     with torch.no_grad():
         with tempfile.TemporaryDirectory() as tempdir:
 
-            compute_accuracy(model, tempdir)
+            compute_accuracy(model, tempdir, run_args, model_path)

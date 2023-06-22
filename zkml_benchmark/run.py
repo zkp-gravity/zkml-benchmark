@@ -1,17 +1,10 @@
+import argparse
+import tempfile
 import time
-
-from run_args import run_args
 
 import ezkl
 
-MODEL_PATH = "models/lenet.onnx"
 INPUTS_PATH = "models/input.json"
-INPUTS_AFTER_FORWARD_PATH = "models/input_after_forward.json"
-KZG_PARAMS_PATH = f"ezkl/kzg_{run_args.logrows}.params"
-CIRCUIT_PARAMS_PATH = "ezkl/circuit.params"
-PK_PATH = "ezkl/pk.key"
-VK_PATH = "ezkl/vk.key"
-PROOF_PATH = "ezkl/lenet.proof"
 
 
 def timed_run(func):
@@ -23,25 +16,48 @@ def timed_run(func):
 
 if __name__ == "__main__":
 
-    print("Running forward pass...")
-    timed_run(lambda: ezkl.forward(INPUTS_PATH, MODEL_PATH,
-              INPUTS_AFTER_FORWARD_PATH, run_args))
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--model', help='Path to the ONNX file', required=True)
+    parser.add_argument('--scale', help='EZKL Scale argument', required=True)
+    parser.add_argument('--bits', help='EZKL Bits argument', required=True)
+    parser.add_argument('--logrows', help='EZKL LogRows argument', required=True)
+    args = parser.parse_args()
 
-    print("Running mock...")
-    timed_run(lambda: ezkl.mock(
-        INPUTS_AFTER_FORWARD_PATH, MODEL_PATH, run_args))
+    model_path = args.model
 
-    print("Generating KZG params...")
-    timed_run(lambda: ezkl.gen_srs(KZG_PARAMS_PATH, run_args.logrows))
+    run_args = ezkl.PyRunArgs()
+    run_args.scale = int(args.scale)
+    run_args.bits = int(args.bits)
+    run_args.logrows = int(args.logrows)
 
-    print("Generating keys...")
-    timed_run(lambda: ezkl.setup(MODEL_PATH, VK_PATH, PK_PATH, KZG_PARAMS_PATH,
-                                 CIRCUIT_PARAMS_PATH, run_args))
+    with tempfile.TemporaryDirectory() as tmpdir:
 
-    print("Generating proof...")
-    timed_run(lambda: ezkl.prove(INPUTS_AFTER_FORWARD_PATH, MODEL_PATH, PK_PATH, PROOF_PATH,
-                                 KZG_PARAMS_PATH, "blake", "single", CIRCUIT_PARAMS_PATH))
+        inputs_after_forward_path = f"{tmpdir}/input_after_forward.json"
+        kzg_params_path = f"{tmpdir}/kzg_{run_args.logrows}.params"
+        circuit_params_path = f"{tmpdir}/circuit.params"
+        pk_path = f"{tmpdir}/pk.key"
+        vk_path = f"{tmpdir}/vk.key"
+        proof_path = f"{tmpdir}/lenet.proof"
 
-    print("Verifying proof...")
-    timed_run(lambda: ezkl.verify(
-        PROOF_PATH, CIRCUIT_PARAMS_PATH, VK_PATH, KZG_PARAMS_PATH))
+        print("Running forward pass...")
+        timed_run(lambda: ezkl.forward(INPUTS_PATH, model_path,
+                                       inputs_after_forward_path, run_args))
+
+        print("Running mock...")
+        timed_run(lambda: ezkl.mock(
+            inputs_after_forward_path, model_path, run_args))
+
+        print("Generating KZG params...")
+        timed_run(lambda: ezkl.gen_srs(kzg_params_path, run_args.logrows))
+
+        print("Generating keys...")
+        timed_run(lambda: ezkl.setup(model_path, vk_path, pk_path, kzg_params_path,
+                                     circuit_params_path, run_args))
+
+        print("Generating proof...")
+        timed_run(lambda: ezkl.prove(inputs_after_forward_path, model_path, pk_path, proof_path,
+                                     kzg_params_path, "blake", "single", circuit_params_path))
+
+        print("Verifying proof...")
+        timed_run(lambda: ezkl.verify(
+            proof_path, circuit_params_path, vk_path, kzg_params_path))
