@@ -17,7 +17,7 @@ Use the `train_mnist.py` script to train a new model (which will show up in the 
 python scripts/train_mnist.py --features 2 4 8
 ```
 
-Next, you have to decide on some quantization parameters. A good start is to install `ezkl` >= 0.3.0 and run:
+Next, you have to decide on some quantization parameters. A good start is to install [`ezkl`](https://github.com/zkonduit/ezkl) >= 0.3.0 and run:
 ```bash
 ezkl gen-settings -M models/lenet_2_4_8.onnx
 ezkl calibrate-settings -M models/lenet_2_4_8.onnx -D models/input.json --target resources
