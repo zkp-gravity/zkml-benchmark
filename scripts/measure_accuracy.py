@@ -12,7 +12,7 @@ import torchvision.transforms as transforms
 from train_mnist import LeNet
 
 
-def predict(x, model, tmpdir, run_args, model_path):
+def predict(x, model, tmpdir, settings_path, model_path):
 
     input_filename = os.path.join(tmpdir, "input.json")
     output_filename = os.path.join(tmpdir, "output.json")
@@ -28,8 +28,8 @@ def predict(x, model, tmpdir, run_args, model_path):
     with open(input_filename, "w") as f:
         json.dump(data, f)
 
-    ezkl.forward(input_filename, model_path,
-                 output_filename, run_args)
+    ezkl.gen_witness(input_filename, model_path,
+                     output_filename, settings_path)
 
     with open(output_filename, "r") as f:
         scores = json.load(f)["output_data"]
@@ -54,9 +54,13 @@ def compute_accuracy(model, tmpdir, run_args, model_path):
     correct = 0
     correct_quantized = 0
 
+    settings_path = os.path.join(tmpdir, "settings.json")
+    ezkl.gen_settings(
+        model_path, settings_path, run_args)
+
     for i, (images, labels) in enumerate(test_loader):
         predicted, predicted_quantized = predict(
-            images, model, tmpdir, run_args, model_path)
+            images, model, tmpdir, settings_path, model_path)
 
         total += labels.size(0)
         correct += (predicted == labels).sum().item()
