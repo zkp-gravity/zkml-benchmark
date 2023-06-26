@@ -1,6 +1,6 @@
 torch==2.0.1
-ezkl-lib==0.1.0
-ezkl==0.0.4
+ezkl-lib==0.3.0
+ezkl==1.0.0
 onnx==1.14.0
 torchvision==0.15.2
 argparse==1.4.0
