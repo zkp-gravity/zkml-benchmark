@@ -9,7 +9,7 @@ import torch
 import torchvision
 import torchvision.transforms as transforms
 # Needed to load pickle file
-from train_mnist import LeNet
+from ezkl_train_mnist import LeNet
 
 
 def predict(x, model, tmpdir, settings_path, model_path):
