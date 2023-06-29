@@ -85,5 +85,9 @@ def compute_accuracy():
 
 if __name__ == "__main__":
 
+    print("This script assumes that you've checked out https://github.com/ddkang/zkml")
+    print("into ../zkml and followed the instructions from the readme.")
+    print("Everything will be run from the zkml directory.")
+
     os.chdir("../zkml")
     compute_accuracy()
